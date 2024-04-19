@@ -12,6 +12,15 @@ func initTensorValue[T Scalar](shape []uint, initialValue T) interface{} {
 		return initialValue
 	}
 
+	if len(shape) == 1 {
+		slice := make([]T, shape[0])
+		for i := range slice {
+			slice[i] = initialValue
+		}
+
+		return slice
+	}
+
 	slice := make([]interface{}, shape[0])
 	for i := range slice {
 		slice[i] = initTensorValue(shape[1:], initialValue)
@@ -24,8 +33,8 @@ func ensureHomogeneous[T Scalar](value interface{}) {
 	val := reflect.ValueOf(value)
 	kind := val.Kind()
 
-	// if it's a Scalar, then we're good
-	if IsScalar(value) {
+	// if it's a Scalar, then just make sure that it's of type T
+	if IsScalar[T](value) {
 		return
 	}
 
@@ -47,13 +56,12 @@ func ensureHomogeneous[T Scalar](value interface{}) {
 			continue
 		}
 
-		switch elem.Interface().(type) {
-		case T:
-			// eat 5-star, do nothing
-		default:
-			var validScalar T
-			panic(fmt.Sprintf("Data type mismatch in tensor. Expected a Scalar of type %T, found %T", validScalar, elem.Interface()))
+		if IsScalar[T](elem.Interface()) {
+			continue
 		}
+
+		var validScalar T
+		panic(fmt.Sprintf("Unexpected type %T in tensor. Expected a Scalar of type %T", elem.Interface(), validScalar))
 	}
 }
 
@@ -124,9 +132,10 @@ func _ensureShape(value interface{}, shape []uint, currentDim int) {
 			_ensureShape(elem.Interface(), shape, currentDim+1)
 			continue
 		} else if currentDim < len(shape)-1 {
-			panic(fmt.Sprintf("%s Detected shape was %v, but found an unexpected scalar at dimension %d",
+			panic(fmt.Sprintf("%s Detected shape was %v, but found an unexpected %d at dimension %d. Expected a slice or array.",
 				ErrorNonHomologous,
 				shape,
+				elem.Type(),
 				currentDim,
 			))
 		}
@@ -135,7 +144,7 @@ func _ensureShape(value interface{}, shape []uint, currentDim int) {
 
 // Returns a pretty string representation of the tensor value.
 func prettifyTensorValue(value interface{}, indentation ...int) string {
-	if IsScalar(value) {
+	if IsScalar[any](value) {
 		return fmt.Sprintf("%v", value)
 	}
 
@@ -158,6 +167,11 @@ func prettifyTensorValue(value interface{}, indentation ...int) string {
 	s := indentationStr + "["
 	for i := 0; i < val.Len(); i++ {
 		elem := val.Index(i)
+
+		if elem.Kind() == reflect.Interface {
+			elem = elem.Elem()
+		}
+
 		if elem.Kind() == reflect.Array || elem.Kind() == reflect.Slice {
 			s += "\n" + prettifyTensorValue(elem.Interface(), indentationLevel+2)
 			isDeepest = false
@@ -183,4 +197,90 @@ func prettifyTensorValue(value interface{}, indentation ...int) string {
 
 	s += "]"
 	return s
+}
+
+func calculateStrides(shape []uint) []uint {
+	// if it's a zero-d array, then there's no strides
+	if len(shape) == 0 {
+		return []uint{}
+	}
+
+	// initialize strides. it's the same length as the shape
+	strides := make([]uint, len(shape))
+
+	// last stride is always 1
+	strides[len(shape)-1] = 1
+
+	for i := len(shape) - 2; i >= 0; i-- {
+		strides[i] = shape[i+1] * strides[i+1]
+	}
+
+	return strides
+}
+
+func valueAt(data interface{}, indices ...int) reflect.Value {
+	val := reflect.ValueOf(data)
+
+	// handle Scalars
+	if len(indices) == 1 && IsScalar[any](data) {
+		return val
+	}
+
+	if val.Kind() != reflect.Slice && val.Kind() != reflect.Array {
+		panic(ErrorNonArraySlice)
+	}
+
+	for i, index := range indices {
+		if val.Kind() == reflect.Interface {
+			val = val.Elem()
+		}
+
+		if val.Kind() == reflect.Slice || val.Kind() == reflect.Array {
+			val = val.Index(index)
+		} else {
+			panic(fmt.Sprintf("Invalid tensor value %v at %v", data, indices[:i+1]))
+		}
+	}
+
+	return val
+}
+
+func getAllIndices(shape []uint) [][]int {
+	tensorIndices := make([][]int, countElementsFromShape(shape))
+
+	if len(shape) == 0 {
+		tensorIndices[0] = []int{0}
+		return tensorIndices
+	}
+
+	indices := make([]int, len(shape))
+	for i := range indices {
+		indices[i] = 0
+	}
+
+	for i := uint(0); i < countElementsFromShape(shape); i++ {
+		tensorIndices[i] = make([]int, len(shape))
+		copy(tensorIndices[i], indices)
+
+		// increment the indices
+		for j := len(indices) - 1; j >= 0; j-- {
+			indices[j]++
+			if indices[j] < int(shape[j]) {
+				break
+			}
+
+			indices[j] = 0
+		}
+	}
+
+	return tensorIndices
+}
+
+func countElementsFromShape(shape []uint) uint {
+	count := uint(1)
+	for _, dimSize := range shape {
+		count *= dimSize
+	}
+
+	return count
 }

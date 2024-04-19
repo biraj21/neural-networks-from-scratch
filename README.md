@@ -9,3 +9,5 @@
 - Neural Networks from Scratch book by Harrison Kinsley and Daniel Kukiela.
 - 3Blue1Brown YouTube channel by Grant Sanderson.
 - Andrej Karpathy's YouTube channel.
+- Tomas Beuzen, for [his article on NumPy](https://www.tomasbeuzen.com/python-programming-for-data-science/chapters/chapter6-numpy-addendum.html#memory-layout-and-strides), where I learned about memory layout and strides.
+- Myself, for my array visualization tool at [arrayvis.netlify.app](https://arrayvis.netlify.app/).

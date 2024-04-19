@@ -12,4 +12,10 @@ const (
 
 	// Error message for a non-2D matrix.
 	ErrorMatMulConflictingDims = "The number of columns in the first matrix must be equal to the number of rows in the second matrix!"
+
+	// Error message for a shape mismatch.
+	ErrorShapeMismatch = "Shapes of the tensors do not match!"
+
+	// Error message for incompatible reshaping.
+	ErrorIncompatibleReshape = "Incompatible reshaping!"
 )
