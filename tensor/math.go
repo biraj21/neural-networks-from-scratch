@@ -87,3 +87,41 @@ func Divide[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
 
 	return result
 }
+
+// Returns the transpose of the given tensor.
+func Transpose[T Scalar](t *Tensor[T]) *Tensor[T] {
+	numDimensions := len(t.shape)
+
+	// transpose of a 0D & 1D tensors is the same as itself
+	if numDimensions < 2 {
+		return t.Copy()
+	}
+
+	// reverse the shape of the given tensor to obtain the shape of the transposed tensor
+	reversedShape := make([]uint, numDimensions)
+	for i := 0; i < numDimensions; i++ {
+		reversedShape[i] = t.shape[numDimensions-1-i]
+	}
+
+	// initialize the transposed Tensor
+	transposedTensor := WithShape[T](reversedShape)
+
+	// get all the indices of the original tensor
+	originalIndices := getAllIndices(t.shape)
+
+	// array that will hold the reversed location
+	reversedLocation := make([]int, numDimensions)
+
+	// traverse the original tensor and set the values to the transposed tensor
+	for _, location := range originalIndices {
+		// reverse the current location
+		for j := 0; j < numDimensions; j++ {
+			reversedLocation[j] = location[numDimensions-1-j]
+		}
+
+		// set the value at the reversed location to the transposed tensor
+		transposedTensor.Set(reversedLocation, t.Get(location...))
+	}
+
+	return transposedTensor
+}

@@ -65,6 +65,7 @@ func (t *Tensor[T]) Reshape(newDims ...uint) *Tensor[T] {
 	return tCopy
 }
 
+// Converts multidimensional indices to the index in the flattened data array representation.
 func (t *Tensor[T]) indicesToDataIndex(indices ...int) int {
 	dataIndex := 0
 	for i, index := range indices {
@@ -129,6 +130,11 @@ func (t *Tensor[T]) Multply(t2 *Tensor[T]) *Tensor[T] {
 // Divides two tensors.
 func (t *Tensor[T]) Divide(t2 *Tensor[T]) *Tensor[T] {
 	return Divide(t, t2)
+}
+
+// Returns the transpose of the tensor.
+func (t *Tensor[T]) Transpose() *Tensor[T] {
+	return Transpose(t)
 }
 
 // Creates a new tensor with the given shape and initial value.
