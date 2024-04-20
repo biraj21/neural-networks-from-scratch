@@ -7,15 +7,27 @@ import (
 )
 
 // Recursively initializes the tensor with the given shape and initial value.
-func initTensorValue[T Scalar](shape []uint, initialValue T) interface{} {
+func initTensorValue[T Scalar](shape []uint, initialValue ...T) interface{} {
+	if len(initialValue) > 1 {
+		panic("There cannot be more than one initial value for a tensor!")
+	}
+
 	if len(shape) == 0 {
-		return initialValue
+		if len(initialValue) == 0 {
+			var emptyValue T
+			return emptyValue
+		}
+
+		return initialValue[0]
 	}
 
 	if len(shape) == 1 {
 		slice := make([]T, shape[0])
-		for i := range slice {
-			slice[i] = initialValue
+
+		if len(initialValue) > 0 {
+			for i := range slice {
+				slice[i] = initialValue[0]
+			}
 		}
 
 		return slice
@@ -23,8 +35,9 @@ func initTensorValue[T Scalar](shape []uint, initialValue T) interface{} {
 
 	slice := make([]interface{}, shape[0])
 	for i := range slice {
-		slice[i] = initTensorValue(shape[1:], initialValue)
+		slice[i] = initTensorValue(shape[1:], initialValue...)
 	}
+
 	return slice
 }
 
@@ -66,7 +79,7 @@ func ensureHomogeneous[T Scalar](value interface{}) {
 }
 
 // Checks if the provided tensor value is homologous. Panics with an error message if it's not.
-// It's a wrapper around _ensureShape() function, which is actually responsible for the validation.
+// It first detects and ensure that the tensor matches the shape. Basically, it's a wrapper over detectShape() and ensureShape() functions.
 func ensureHomologous(value interface{}) {
 	shape := detectShape(value)
 
@@ -75,7 +88,7 @@ func ensureHomologous(value interface{}) {
 		return
 	}
 
-	_ensureShape(value, shape, 0)
+	ensureShape(value, shape, 0)
 }
 
 // Tries to detect the shape of the tensor value.
@@ -105,7 +118,7 @@ func detectShape(value interface{}) (shape []uint) {
 	return shape
 }
 
-func _ensureShape(value interface{}, shape []uint, currentDim int) {
+func ensureShape(value interface{}, shape []uint, currentDim int) {
 	if len(shape) == 0 {
 		panic("Invalid shape")
 	}
@@ -129,7 +142,7 @@ func _ensureShape(value interface{}, shape []uint, currentDim int) {
 		elem := val.Index(i)
 
 		if elem.Kind() == reflect.Array || elem.Kind() == reflect.Slice {
-			_ensureShape(elem.Interface(), shape, currentDim+1)
+			ensureShape(elem.Interface(), shape, currentDim+1)
 			continue
 		} else if currentDim < len(shape)-1 {
 			panic(fmt.Sprintf("%s Detected shape was %v, but found an unexpected %d at dimension %d. Expected a slice or array.",
@@ -181,7 +194,7 @@ func prettifyTensorValue(value interface{}, indentation ...int) string {
 
 		// add comma if it's not the last element
 		if i < val.Len()-1 {
-			s += ", "
+			s += " "
 		}
 
 		// add new line if it's an array or slice
@@ -245,31 +258,46 @@ func valueAt(data interface{}, indices ...int) reflect.Value {
 	return val
 }
 
+// Returns all the traversable indices for a tenson of the given shape.
+//
+// For example, if the shape is [2, 3], then the returned indices will be:
+// [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]]
 func getAllIndices(shape []uint) [][]int {
-	tensorIndices := make([][]int, countElementsFromShape(shape))
+	numDimensions := len(shape)
+	numElements := countElementsFromShape(shape)
 
-	if len(shape) == 0 {
+	tensorIndices := make([][]int, numElements)
+
+	if numDimensions == 0 {
 		tensorIndices[0] = []int{0}
 		return tensorIndices
 	}
 
-	indices := make([]int, len(shape))
+	indices := make([]int, numDimensions)
+
+	// initialize first set of indices to 0 (eg. [0, 0, ..., 0]) it will be added to tensorIndices in the loop
 	for i := range indices {
 		indices[i] = 0
 	}
 
-	for i := uint(0); i < countElementsFromShape(shape); i++ {
-		tensorIndices[i] = make([]int, len(shape))
+	// populate the tensor indices in a pattern like
+	// [0, 0, 0], [0, 0, 1], [0, 0, 2], ..., [0, 1, 0], [0, 1, 1], [0, 1, 2], ..., [1, 0, 0], [1, 0, 1], [1, 0, 2], ...
+	for i := 0; i < len(tensorIndices); i++ {
+		tensorIndices[i] = make([]int, numDimensions)
 		copy(tensorIndices[i], indices)
 
 		// increment the indices
-		for j := len(indices) - 1; j >= 0; j-- {
-			indices[j]++
-			if indices[j] < int(shape[j]) {
+		for dim := numDimensions - 1; dim >= 0; dim-- {
+			indices[dim]++
+
+			// if the index at current dimension is still less than its size, we will keep on
+			// incrementing that dimension's index only before moving to the next one
+			if indices[dim] < int(shape[dim]) {
 				break
 			}
 
-			indices[j] = 0
+			// reset the current dimension's index to 0 before moving to the next dimension
+			indices[dim] = 0
 		}
 	}
 

@@ -6,7 +6,7 @@ import (
 )
 
 // Tensor is a struct that represents a multi-dimensional array.
-type Tensor[T _NumericScalar] struct {
+type Tensor[T Scalar] struct {
 	data     []T
 	dataType reflect.Type
 	shape    []uint
@@ -94,15 +94,21 @@ func (t *Tensor[T]) Set(indices []int, value T) {
 
 // Returns a string representation of the tensor.
 func (t *Tensor[T]) String() string {
-	s := fmt.Sprintf("{\n  shape: %v\n  dataType: %v\n  value: %v", t.shape, t.dataType, t.data)
-	// if t.NDims() > 1 {
-	// 	s += "\n" + prettifyTensorValue(t.data, 2)
-	// } else {
-	// 	s += " " + prettifyTensorValue(t.data)
-	// }
+	if t.NDims() < 2 {
+		return fmt.Sprintf("Tensor(%v)", prettifyTensorValue(t.data))
+	}
 
-	s += "\n}"
-	return s
+	// when we've more than 1 dimensions, we first convert the flattened t.data to a multi-dimensional representation
+	// this makes it easier to work with the data while creating its string representation
+
+	tensorValue := initTensorValue[T](t.shape)
+	tensorIndices := getAllIndices(t.shape)
+	for i := 0; i < len(tensorIndices); i++ {
+		v := t.Get(tensorIndices[i]...)
+		valueAt(tensorValue, tensorIndices[i]...).Set(reflect.ValueOf(v))
+	}
+
+	return fmt.Sprintf("Tensor(%v)", prettifyTensorValue(tensorValue))
 }
 
 // Adds two tensors.
@@ -166,13 +172,13 @@ func WithValue[T Scalar](data interface{}) *Tensor[T] {
 	// determine the shape of the tensor
 	shape := detectShape(data)
 
-	numberOfElements := countElementsFromShape(shape)
+	numElements := countElementsFromShape(shape)
 
-	// it's length would be same as the number of elements in the tensor
+	// its length would be same as the number of elements in the tensor
 	tensorIndices := getAllIndices(shape)
 
-	tensorData := make([]T, numberOfElements)
-	for i := uint(0); i < numberOfElements; i++ {
+	tensorData := make([]T, numElements)
+	for i := uint(0); i < numElements; i++ {
 		tensorData[i] = valueAt(data, tensorIndices[i]...).Interface().(T)
 	}
 

@@ -13,16 +13,9 @@ type _NumericScalar interface {
 		complex64 | complex128
 }
 
-/*
-Scalar is a type that is only a single value, not a collection of values. For example, bool, int, float64, etc.
-It's a union type of bool and NumericScalar.
-
-The reason I've to separate boolean and numbers is that T(0), where T is constrained to Scalar would fail because
-bool(0) doesn't work in Go. Also for mathematical operations, we need to differentiate between boolean and numbers
-as math operators like +, -, *, /, etc. don't work on boolean values.
-
-Hence the two separate interfaces: Scalar and NumericScalar.
-*/
+// Scalar is a type that is only a single value, not a collection of values. For example, int, float64, etc.
+//
+// Note that it doesn't include booleans becuase they are not numeric, and thus numeric operations can't be performed on them.
 type Scalar interface {
 	_NumericScalar
 }
