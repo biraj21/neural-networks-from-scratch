@@ -312,3 +312,50 @@ func countElementsFromShape(shape []uint) uint {
 
 	return count
 }
+
+func areShapesBroadcastable(shapes ...[]uint) bool {
+	if len(shapes) == 0 {
+		panic("areShapesBroadcastable: At least one shape is required")
+	}
+
+	maxDimensions := 0
+	for _, shape := range shapes {
+		if len(shape) > maxDimensions {
+			maxDimensions = len(shape)
+		}
+	}
+
+	firstShape := make([]uint, maxDimensions)
+	copyWithPadding(firstShape, shapes[0], 1)
+
+	currentShape := make([]uint, maxDimensions)
+	for i := 1; i < len(shapes); i++ {
+		copyWithPadding(currentShape, shapes[i], 1)
+
+		for j := 0; j < maxDimensions; j++ {
+			// general broadcasting rules: https://numpy.org/doc/stable/user/basics.broadcasting.html#general-broadcasting-rules
+			// two dimensions are compatible if 1. they are equal, or 2. one of them is 1
+			f := firstShape[j]
+			c := currentShape[j]
+			if f != c && f != 1 && c != 1 {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func copyWithPadding[T Scalar](dest []T, src []T, padWith T) {
+	if len(dest) < len(src) {
+		panic("Length of destination array cannot be lesser than that of source array.")
+	}
+
+	// add padding
+	for i := 0; i < len(dest)-len(src); i++ {
+		dest[i] = padWith
+	}
+
+	// copy the remaining values
+	copy(dest[len(dest)-len(src):], src)
+}

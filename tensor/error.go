@@ -18,4 +18,7 @@ const (
 
 	// Error message for incompatible reshaping.
 	ErrorIncompatibleReshape = "Incompatible reshaping!"
+
+	// Error message for tensors incompatible for broadcast
+	ErrorCannotBroadcast = "Tensors could not be broadcast together!"
 )

@@ -1,7 +1,5 @@
 package tensor
 
-import "reflect"
-
 // Perfoms matrix multiplication on two 2D matrices.
 func MatrixMultiplication[T Scalar](t1, t2 *Tensor[T]) (result *Tensor[T]) {
 	// check if both tensors are 2D matrices
@@ -34,13 +32,14 @@ func MatrixMultiplication[T Scalar](t1, t2 *Tensor[T]) (result *Tensor[T]) {
 
 // Adds two tensors.
 func Add[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
-	if !reflect.DeepEqual(t1.shape, t2.shape) {
-		panic(ErrorShapeMismatch)
-	}
+	broadcasts := Broadcast(t1, t2)
+	b1 := broadcasts[0]
+	b2 := broadcasts[1]
 
-	result := WithShape[T](t1.shape)
-	for i := 0; i < len(t1.data); i++ {
-		result.data[i] = t1.data[i] + t2.data[i]
+	result := WithShape[T](b1.shape)
+	numElements := int(countElementsFromShape(result.shape))
+	for i := 0; i < numElements; i++ {
+		result.data[i] = b1.FlattenedGet(i) + b2.FlattenedGet(i)
 	}
 
 	return result
@@ -48,13 +47,14 @@ func Add[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
 
 // Subtracts two tensors.
 func Subtract[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
-	if !reflect.DeepEqual(t1.shape, t2.shape) {
-		panic(ErrorShapeMismatch)
-	}
+	broadcasts := Broadcast(t1, t2)
+	b1 := broadcasts[0]
+	b2 := broadcasts[1]
 
-	result := WithShape[T](t1.shape)
-	for i := 0; i < len(t1.data); i++ {
-		result.data[i] = t1.data[i] - t2.data[i]
+	result := WithShape[T](b1.shape)
+	numElements := int(countElementsFromShape(result.shape))
+	for i := 0; i < numElements; i++ {
+		result.data[i] = b1.FlattenedGet(i) - b2.FlattenedGet(i)
 	}
 
 	return result
@@ -62,13 +62,14 @@ func Subtract[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
 
 // Multiplies two tensors.
 func Multply[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
-	if !reflect.DeepEqual(t1.shape, t2.shape) {
-		panic(ErrorShapeMismatch)
-	}
+	broadcasts := Broadcast(t1, t2)
+	b1 := broadcasts[0]
+	b2 := broadcasts[1]
 
-	result := WithShape[T](t1.shape)
-	for i := 0; i < len(t1.data); i++ {
-		result.data[i] = t1.data[i] * t2.data[i]
+	result := WithShape[T](b1.shape)
+	numElements := int(countElementsFromShape(result.shape))
+	for i := 0; i < numElements; i++ {
+		result.data[i] = b1.FlattenedGet(i) - b2.FlattenedGet(i)
 	}
 
 	return result
@@ -76,13 +77,14 @@ func Multply[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
 
 // Divides two tensors.
 func Divide[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
-	if !reflect.DeepEqual(t1.shape, t2.shape) {
-		panic(ErrorShapeMismatch)
-	}
+	broadcasts := Broadcast(t1, t2)
+	b1 := broadcasts[0]
+	b2 := broadcasts[1]
 
-	result := WithShape[T](t1.shape)
-	for i := 0; i < len(t1.data); i++ {
-		result.data[i] = t1.data[i] / t2.data[i]
+	result := WithShape[T](b1.shape)
+	numElements := int(countElementsFromShape(result.shape))
+	for i := 0; i < numElements; i++ {
+		result.data[i] = b1.FlattenedGet(i) - b2.FlattenedGet(i)
 	}
 
 	return result
