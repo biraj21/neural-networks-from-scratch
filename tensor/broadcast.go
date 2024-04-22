@@ -1,5 +1,7 @@
 package tensor
 
+import "fmt"
+
 type BroadcastTensor[T Scalar] struct {
 	// new shape after broadcast
 	shape []uint
@@ -13,8 +15,54 @@ func (b *BroadcastTensor[T]) Shape() []uint {
 	return b.shape
 }
 
+func (b *BroadcastTensor[T]) Get(indices ...int) T {
+	if len(indices) != len(b.shape) {
+		panic(fmt.Sprintf("Invalid number of indices %d for broadcast of shape %v", len(indices), b.shape))
+	}
+
+	tensorIndices := make([]int, len(b.tensor.shape))
+
+	// skip extra indices. for eg, broadcast has 5 dims & actual tensor has just 3, then skip the first 2 indices
+	copy(tensorIndices, indices[len(indices)-len(b.tensor.shape):])
+
+	// make remaining indices compatible with the tensor's shape
+	for i, dimSize := range b.tensor.shape {
+		if int(dimSize) <= tensorIndices[i] {
+			tensorIndices[i] = int(dimSize) - 1
+		}
+	}
+
+	return b.tensor.Get(tensorIndices...)
+}
+
+func (b *BroadcastTensor[T]) dataIndexToIndices(dataIndex int) []int {
+	strides := calculateStrides(b.shape)
+
+	indices := make([]int, len(strides))
+	for i := len(strides) - 1; i >= 0; i-- {
+		// Calculate the index for the current dimension
+		indices[i] = dataIndex % int(b.shape[i])
+		// Update the remaining dataIndex for the next dimension
+		dataIndex /= int(b.shape[i])
+	}
+
+	return indices
+}
+
 func (b *BroadcastTensor[T]) FlattenedGet(index int) T {
-	return b.tensor.data[index%len(b.tensor.data)]
+	indices := b.dataIndexToIndices(index)
+	return b.Get(indices...)
+}
+
+// Converts the BroadcastTensor to Tensor.
+func (b *BroadcastTensor[T]) ToTensor() *Tensor[T] {
+	t := WithShape[T](b.shape)
+
+	for _, indices := range getAllIndices(b.shape) {
+		t.Set(indices, b.Get(indices...))
+	}
+
+	return t
 }
 
 func CanBroadcast[T Scalar](tensors ...*Tensor[T]) bool {

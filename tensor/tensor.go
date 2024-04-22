@@ -123,8 +123,8 @@ func (t *Tensor[T]) Subtract(t2 *Tensor[T]) *Tensor[T] {
 }
 
 // Multiplies two tensors.
-func (t *Tensor[T]) Multply(t2 *Tensor[T]) *Tensor[T] {
-	return Multply(t, t2)
+func (t *Tensor[T]) Multiply(t2 *Tensor[T]) *Tensor[T] {
+	return Multiply(t, t2)
 }
 
 // Divides two tensors.

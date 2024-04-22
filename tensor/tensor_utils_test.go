@@ -14,8 +14,7 @@ func TestCopyWithPadding(t *testing.T) {
 	copyWithPadding(dest, arr, padWith)
 
 	expected := []int{padWith, padWith, 1, 2, 3}
-
-	if !reflect.DeepEqual(dest, expected) {
+	if !reflect.DeepEqual(expected, dest) {
 		t.Fatalf("copyWithPadding(): expected %v, got %v", expected, dest)
 	}
 }
@@ -29,7 +28,7 @@ func TestAreShapesBroadcastableYes(t *testing.T) {
 	)
 
 	expected := true
-	if areBroadcastable != expected {
+	if expected != areBroadcastable {
 		t.Fatalf("areBroadcastable(): expected %v, got %v", expected, areBroadcastable)
 	}
 }
@@ -41,7 +40,7 @@ func TestAreShapesBroadcastableNo(t *testing.T) {
 	)
 
 	expected := false
-	if areBroadcastable != expected {
+	if expected != areBroadcastable {
 		t.Fatalf("areBroadcastable(): expected %v, got %v", expected, areBroadcastable)
 	}
 }

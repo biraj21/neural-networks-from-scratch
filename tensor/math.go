@@ -1,6 +1,6 @@
 package tensor
 
-// Perfoms matrix multiplication on two 2D matrices.
+// Performs matrix multiplication on two 2D matrices.
 func MatrixMultiplication[T Scalar](t1, t2 *Tensor[T]) (result *Tensor[T]) {
 	// check if both tensors are 2D matrices
 	if len(t1.shape) != 2 || len(t2.shape) != 2 {
@@ -22,7 +22,6 @@ func MatrixMultiplication[T Scalar](t1, t2 *Tensor[T]) (result *Tensor[T]) {
 				sumOfProducts += t1.Get(r, k) * t2.Get(k, c)
 			}
 
-			// fmt.Printf("Sum of products at (%d, %d): %v\n", r, c, sumOfProducts)
 			result.Set([]int{r, c}, sumOfProducts)
 		}
 	}
@@ -61,7 +60,7 @@ func Subtract[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
 }
 
 // Multiplies two tensors.
-func Multply[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
+func Multiply[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
 	broadcasts := Broadcast(t1, t2)
 	b1 := broadcasts[0]
 	b2 := broadcasts[1]
@@ -69,7 +68,7 @@ func Multply[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
 	result := WithShape[T](b1.shape)
 	numElements := int(countElementsFromShape(result.shape))
 	for i := 0; i < numElements; i++ {
-		result.data[i] = b1.FlattenedGet(i) - b2.FlattenedGet(i)
+		result.data[i] = b1.FlattenedGet(i) * b2.FlattenedGet(i)
 	}
 
 	return result
@@ -84,7 +83,7 @@ func Divide[T Scalar](t1, t2 *Tensor[T]) *Tensor[T] {
 	result := WithShape[T](b1.shape)
 	numElements := int(countElementsFromShape(result.shape))
 	for i := 0; i < numElements; i++ {
-		result.data[i] = b1.FlattenedGet(i) - b2.FlattenedGet(i)
+		result.data[i] = b1.FlattenedGet(i) / b2.FlattenedGet(i)
 	}
 
 	return result
