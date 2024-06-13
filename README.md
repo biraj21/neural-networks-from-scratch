@@ -1,6 +1,8 @@
-# nnfs-go
+# Neural Networks from Scratch in Go
 
-**nnfs-go** is a collection of neural network implementations and tensor operations from scratch in Go. This repository is inspired by the [Neural Networks from Scratch book](https://nnfs.io/) and other resources, aiming to provide practical examples and educational materials for building neural networks and performing tensor operations using Go.
+This repository contains a neural network implementation and tensor operations written from scratch in Go. It is inspired by the book [Neural Networks from Scratch](https://nnfs.io/) by Harrison Kinsley (Sentdex) and Daniel Kukiela.
+
+The book is written in Python (well, English), and neural networks are implemented using NumPy. Since there is no NumPy in Go (not that I'm aware of), I am also building a bit of NumPy functionality from scratch in Go as a byproduct. Even if there was a NumPy equivalent in Go, I probably wouldn't use it.
 
 **Note:** This project is still a work in progress. It's barely started, to be honest. I'm working on it in my free time, and I'm not sure how far I'll go with this project. I'm doing it for fun and to learn more about neural networks and Go.
 
