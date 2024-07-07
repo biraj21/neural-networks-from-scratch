@@ -137,7 +137,7 @@ func (t *Tensor[T]) Transpose() *Tensor[T] {
 	return Transpose(t)
 }
 
-// Creates a new tensor with the given shape and initial value.
+// Creates a new tensor with the given shape and initial value. Zero by default.
 func WithShape[T Scalar](shape []uint, initialValue ...T) *Tensor[T] {
 	if len(initialValue) > 1 {
 		panic("Only one initial value is allowed!")
@@ -151,9 +151,32 @@ func WithShape[T Scalar](shape []uint, initialValue ...T) *Tensor[T] {
 
 	data := make([]T, countElementsFromShape(shape))
 	if len(initialValue) > 0 {
-		for i := 0; i < int(shape[0]); i++ {
+		for i := 0; i < len(data); i++ {
 			data[i] = initialValue[0]
 		}
+	}
+
+	// dummy variable to get the data type at runtime
+	var dataType T
+
+	return &Tensor[T]{
+		data:     data,
+		dataType: reflect.TypeOf(dataType),
+		shape:    shape,
+		strides:  calculateStrides(shape),
+	}
+}
+
+func WithRandom[T Scalar](shape []uint, minValue, maxValue T) *Tensor[T] {
+	for i, dim := range shape {
+		if dim <= 0 {
+			panic(fmt.Sprintf("Invalid shape: dimension %d cannot be %d", i, dim))
+		}
+	}
+
+	data := make([]T, countElementsFromShape(shape))
+	for i := 0; i < len(data); i++ {
+		data[i] = randomBetween(minValue, maxValue)
 	}
 
 	// dummy variable to get the data type at runtime

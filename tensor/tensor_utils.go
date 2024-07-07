@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"reflect"
 	"strings"
 )
@@ -74,7 +75,7 @@ func ensureHomogeneous[T Scalar](value interface{}) {
 		}
 
 		var validScalar T
-		panic(fmt.Sprintf("Unexpected type %T in tensor. Expected a Scalar of type %T", elem.Interface(), validScalar))
+		panic(fmt.Sprintf("Unexpected type %T in tensorand. Expected a Scalar of type %T", elem.Interface(), validScalar))
 	}
 }
 
@@ -358,4 +359,19 @@ func copyWithPadding[T Scalar](dest []T, src []T, padWith T) {
 
 	// copy the remaining values
 	copy(dest[len(dest)-len(src):], src)
+}
+
+func randomBetween[T Scalar](minValue, maxValue T) T {
+	switch any(minValue).(type) {
+	case int, int8, int16, int32, int64:
+		return T(rand.Int64N(int64(maxValue-minValue)) + int64(minValue))
+	case uint, uint8, uint16, uint32, uint64, uintptr:
+		return T(rand.Uint64N(uint64(maxValue-minValue)) + uint64(minValue))
+	case float32:
+		return T(rand.Float32()*float32(maxValue-minValue) + float32(minValue))
+	case float64:
+		return T(rand.Float64()*float64(maxValue-minValue) + float64(minValue))
+	default:
+		panic("Unsupported type for random number generation")
+	}
 }
