@@ -5,19 +5,34 @@ import (
 	"reflect"
 )
 
-// _NumericScalar is a type that is a numeric scalar. For example, int, float64, etc.
-type _NumericScalar interface {
-	int | int8 | int16 | int32 | int64 |
-		uint | uint8 | uint16 | uint32 | uint64 | uintptr |
-		float32 | float64 |
-		complex64 | complex128
+type IntScalar interface {
+	int | int8 | int16 | int32 | int64
 }
+
+type UintScalar interface {
+	uint | uint8 | uint16 | uint32 | uint64 | uintptr
+}
+
+type FloatScalar interface {
+	float32 | float64
+}
+
+// NumericScalarReal is a type that is a real number (int, float64, etc.)
+type NumericScalarReal interface {
+	IntScalar | UintScalar | FloatScalar
+}
+
+// complex number is was making it difficult for me to create randomBetween function
+// so i removed them. skill issue
+// type NumericScalarComplex interface {
+// 	complex64 | complex128
+// }
 
 // Scalar is a type that is only a single value, not a collection of values. For example, int, float64, etc.
 //
-// Note that it doesn't include booleans becuase they are not numeric, and thus numeric operations can't be performed on them.
+// Note that it doesn't include booleans because they are not numeric, and thus numeric operations can't be performed on them.
 type Scalar interface {
-	_NumericScalar
+	NumericScalarReal
 }
 
 // Checks if the provided value is a Scalar or not. Panics if it's a Scalar but not of the expected type.
